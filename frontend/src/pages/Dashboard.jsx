@@ -5,6 +5,17 @@ import { useAuth } from '../contexts/AuthContext';
 const Dashboard = () => {
   const { currentUser } = useAuth();
 
+  // Redirect based on user role
+  if (currentUser?.role === 'admin') {
+    window.location.href = '/admin/dashboard';
+    return null;
+  }
+  
+  if (currentUser?.role === 'executive') {
+    window.location.href = '/executive/dashboard';
+    return null;
+  }
+
   // Mock data for elections
   const activeElections = [
     {
@@ -75,7 +86,7 @@ const Dashboard = () => {
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-primary mb-2">
-            Welcome back, {currentUser?.name || 'User'}!
+            Welcome back, {currentUser?.fullName || 'Voter'}!
           </h1>
           <p className="text-gray-600">
             Here's what's happening with your voting activities
