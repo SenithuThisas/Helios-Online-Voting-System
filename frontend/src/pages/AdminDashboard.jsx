@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Redirect if not admin
+  const { currentUser } = useAuth();
+  if (currentUser?.role !== 'admin') {
+    window.location.href = '/dashboard';
+    return null;
+  }
 
   // Mock data for admin dashboard
   const stats = {
@@ -269,15 +277,15 @@ const AdminDashboard = () => {
   const renderElections = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h3 className="text-xl font-semibold text-primary">Manage Elections</h3>
-        <button className="btn-primary">Create New Election</button>
+        <h3 className="text-xl font-semibold text-primary">System Elections Overview</h3>
+        <button className="btn-primary">View All Elections</button>
       </div>
       
       <div className="card">
         <p className="text-gray-600 text-center py-8">
-          Election management interface will be implemented here.
+          System-wide election monitoring and oversight interface.
           <br />
-          Features: Create, edit, delete elections, manage candidates, view results.
+          Features: View all elections across the system, monitor performance, audit logs, system-wide reports.
         </p>
       </div>
     </div>
@@ -286,15 +294,15 @@ const AdminDashboard = () => {
   const renderUsers = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h3 className="text-xl font-semibold text-primary">Manage Users</h3>
+        <h3 className="text-xl font-semibold text-primary">User Management</h3>
         <button className="btn-primary">Add New User</button>
       </div>
       
       <div className="card">
         <p className="text-gray-600 text-center py-8">
-          User management interface will be implemented here.
+          System user management and role administration.
           <br />
-          Features: View all users, manage roles, approve registrations, view activity.
+          Features: View all users, manage roles (Admin, Executive, Voter), approve registrations, view activity logs, user permissions.
         </p>
       </div>
     </div>
@@ -303,15 +311,15 @@ const AdminDashboard = () => {
   const renderReports = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h3 className="text-xl font-semibold text-primary">Reports & Analytics</h3>
+        <h3 className="text-xl font-semibold text-primary">System Reports & Analytics</h3>
         <button className="btn-primary">Generate Report</button>
       </div>
       
       <div className="card">
         <p className="text-gray-600 text-center py-8">
-          Reports and analytics interface will be implemented here.
+          System-wide reports and analytics dashboard.
           <br />
-          Features: Voter turnout, election statistics, audit logs, export data.
+          Features: System performance metrics, user activity analytics, election statistics, audit logs, data export, compliance reports.
         </p>
       </div>
     </div>
@@ -323,9 +331,9 @@ const AdminDashboard = () => {
       
       <div className="card">
         <p className="text-gray-600 text-center py-8">
-          System settings interface will be implemented here.
+          System configuration and administration settings.
           <br />
-          Features: System configuration, security settings, notification preferences, backup/restore.
+          Features: System configuration, security settings, role permissions, notification preferences, backup/restore, system maintenance.
         </p>
       </div>
     </div>
@@ -338,7 +346,7 @@ const AdminDashboard = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-primary mb-2">Admin Dashboard</h1>
           <p className="text-gray-600">
-            Manage elections, users, and system settings
+            System administration and user management
           </p>
         </div>
 
