@@ -43,7 +43,10 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     updateUser,
-    loading
+    loading,
+    isAdmin: currentUser?.role === 'admin',
+    isExecutive: currentUser?.role === 'executive',
+    isVoter: currentUser?.role === 'voter'
   };
 
   return (
