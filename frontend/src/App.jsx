@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import ExecutiveDashboard from './pages/ExecutiveDashboard';
 import Elections from './pages/Elections';
 import ElectionDetail from './pages/ElectionDetail';
 import VotingHistory from './pages/VotingHistory';
@@ -33,10 +34,18 @@ function App() {
                 } 
               />
               <Route 
-                path="/admin" 
+                path="/admin/dashboard" 
                 element={
                   <ProtectedRoute adminOnly>
                     <AdminDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/executive/dashboard" 
+                element={
+                  <ProtectedRoute executiveOnly>
+                    <ExecutiveDashboard />
                   </ProtectedRoute>
                 } 
               />
