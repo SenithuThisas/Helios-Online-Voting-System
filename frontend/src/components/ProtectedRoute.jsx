@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-const ProtectedRoute = ({ children, adminOnly = false }) => {
+const ProtectedRoute = ({ children, adminOnly = false, executiveOnly = false }) => {
   const { currentUser } = useAuth();
 
   if (!currentUser) {
@@ -10,6 +10,10 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
   }
 
   if (adminOnly && currentUser.role !== 'admin') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  if (executiveOnly && currentUser.role !== 'executive') {
     return <Navigate to="/dashboard" replace />;
   }
 
