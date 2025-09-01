@@ -28,7 +28,7 @@ const Navigation = () => {
             {currentUser ? (
               <>
                 <Link
-                  to="/dashboard"
+                  to={currentUser.role === 'admin' ? '/admin/dashboard' : currentUser.role === 'executive' ? '/executive/dashboard' : '/dashboard'}
                   className="text-light hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   Dashboard
@@ -41,10 +41,18 @@ const Navigation = () => {
                 </Link>
                 {currentUser.role === 'admin' && (
                   <Link
-                    to="/admin"
+                    to="/admin/dashboard"
                     className="text-light hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
                   >
                     Admin
+                  </Link>
+                )}
+                {currentUser.role === 'executive' && (
+                  <Link
+                    to="/executive/dashboard"
+                    className="text-light hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  >
+                    Executive
                   </Link>
                 )}
                 <Link
@@ -103,7 +111,7 @@ const Navigation = () => {
             {currentUser ? (
               <>
                 <Link
-                  to="/dashboard"
+                  to={currentUser.role === 'admin' ? '/admin/dashboard' : currentUser.role === 'executive' ? '/executive/dashboard' : '/dashboard'}
                   className="text-light hover:text-white block px-3 py-2 rounded-md text-base font-medium"
                   onClick={() => setIsMenuOpen(false)}
                 >
@@ -118,11 +126,20 @@ const Navigation = () => {
                 </Link>
                 {currentUser.role === 'admin' && (
                   <Link
-                    to="/admin"
+                    to="/admin/dashboard"
                     className="text-light hover:text-white block px-3 py-2 rounded-md text-base font-medium"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Admin
+                  </Link>
+                )}
+                {currentUser.role === 'executive' && (
+                  <Link
+                    to="/executive/dashboard"
+                    className="text-light hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Executive
                   </Link>
                 )}
                 <Link
