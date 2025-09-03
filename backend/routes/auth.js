@@ -19,7 +19,8 @@ router.post('/register', validateRegistration, async (req, res) => {
       dateOfBirth,
       address,
       nic,
-      division
+      division,
+      role
     } = req.body;
 
     // Check if user already exists
@@ -43,7 +44,8 @@ router.post('/register', validateRegistration, async (req, res) => {
       dateOfBirth,
       address,
       nic,
-      division
+      division,
+      role: role || 'voter' // Default to 'voter' if no role specified
     });
 
     await user.save();
