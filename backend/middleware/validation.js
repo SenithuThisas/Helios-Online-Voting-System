@@ -82,6 +82,11 @@ const validateRegistration = [
     .isIn(['IT', 'Finance', 'HR', 'Operations', 'Marketing', 'Sales', 'Engineering', 'Support'])
     .withMessage('Please select a valid division'),
   
+  body('role')
+    .optional()
+    .isIn(['voter', 'executive', 'admin'])
+    .withMessage('Please select a valid role'),
+  
   handleValidationErrors
 ];
 
