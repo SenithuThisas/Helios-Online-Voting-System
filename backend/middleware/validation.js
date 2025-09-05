@@ -19,8 +19,8 @@ const handleValidationErrors = (req, res, next) => {
 const validateRegistration = [
   body('fullName')
     .trim()
-    .isLength({ min: 2, max: 100 })
-    .withMessage('Full name must be between 2 and 100 characters'),
+    .isLength({ min: 2, max: 300 })
+    .withMessage('Full name must be between 2 and 300 characters'),
   
   body('membershipId')
     .trim()
