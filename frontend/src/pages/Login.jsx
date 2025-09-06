@@ -5,21 +5,22 @@ import { useAuth } from '../contexts/AuthContext';
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
+    nic: '',
     password: ''
   });
   const [otp, setOtp] = useState('');
-  const [showOtpForm, setShowOtpForm] = useState(false);
   const [countdown, setCountdown] = useState(180); // 3 minutes in seconds
   const [isResendDisabled, setIsResendDisabled] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [serverErrors, setServerErrors] = useState({});
   
-  const { login } = useAuth();
+  const { login, verifyOTP, resendOTP, loginStep, loginData, resetLoginFlow } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     let timer;
-    if (showOtpForm && countdown > 0) {
+    if (loginStep === 'otp' && countdown > 0) {
       timer = setInterval(() => {
         setCountdown(prev => prev - 1);
       }, 1000);
@@ -27,7 +28,15 @@ const Login = () => {
       setIsResendDisabled(false);
     }
     return () => clearInterval(timer);
-  }, [showOtpForm, countdown]);
+  }, [loginStep, countdown]);
+
+  // Reset countdown when OTP step starts
+  useEffect(() => {
+    if (loginStep === 'otp') {
+      setCountdown(180);
+      setIsResendDisabled(true);
+    }
+  }, [loginStep]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -42,6 +51,11 @@ const Login = () => {
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
     }
+    if (!formData.nic) {
+      newErrors.nic = 'NIC is required';
+    } else if (formData.nic.length < 5 || formData.nic.length > 20) {
+      newErrors.nic = 'NIC must be between 5 and 20 characters';
+    }
     if (!formData.password) {
       newErrors.password = 'Password is required';
     }
@@ -54,16 +68,17 @@ const Login = () => {
     if (!validateForm()) return;
 
     setIsLoading(true);
+    setServerErrors({});
     try {
-      // Simulate API call for login
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Show OTP form
-      setShowOtpForm(true);
-      setCountdown(180);
-      setIsResendDisabled(true);
+      await login(formData);
     } catch (error) {
       console.error('Login error:', error);
+      if (error.message.includes('Validation failed')) {
+        // Handle validation errors from server
+        setServerErrors({ general: 'Please check your input and try again' });
+      } else {
+        setServerErrors({ general: error.message });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -77,22 +92,13 @@ const Login = () => {
     }
 
     setIsLoading(true);
+    setErrors({});
     try {
-      // Simulate OTP verification
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock user data
-      const userData = {
-        id: '1',
-        email: formData.email,
-        name: 'John Doe',
-        role: 'user'
-      };
-      
-      login(userData);
+      await verifyOTP(otp);
       navigate('/dashboard');
     } catch (error) {
-      setErrors({ otp: 'Invalid OTP. Please try again.' });
+      console.error('OTP verification error:', error);
+      setErrors({ otp: error.message || 'Invalid OTP. Please try again.' });
     } finally {
       setIsLoading(false);
     }
@@ -102,10 +108,10 @@ const Login = () => {
     setIsResendDisabled(true);
     setCountdown(180);
     try {
-      // Simulate resending OTP
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await resendOTP();
     } catch (error) {
       console.error('Resend OTP error:', error);
+      setErrors({ general: error.message || 'Failed to resend OTP' });
     }
   };
 
@@ -122,16 +128,20 @@ const Login = () => {
         [name]: ''
       }));
     }
+    // Clear server errors when user starts typing
+    if (serverErrors.general) {
+      setServerErrors({});
+    }
   };
 
-  if (showOtpForm) {
+  if (loginStep === 'otp') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
         <div className="form-container">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-primary">Verify OTP</h2>
             <p className="text-gray-600 mt-2">
-              We've sent a 6-digit code to {formData.email}
+              We've sent a 6-digit code to {loginData?.email}
             </p>
           </div>
 
@@ -182,7 +192,7 @@ const Login = () => {
             <div className="text-center">
               <button
                 type="button"
-                onClick={() => setShowOtpForm(false)}
+                onClick={resetLoginFlow}
                 className="text-gray-600 hover:text-gray-800 text-sm"
               >
                 ← Back to Login
@@ -205,6 +215,12 @@ const Login = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {serverErrors.general && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+              {serverErrors.general}
+            </div>
+          )}
+
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
               Email Address
@@ -220,6 +236,24 @@ const Login = () => {
             />
             {errors.email && (
               <p className="text-red-600 text-sm mt-1">{errors.email}</p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="nic" className="block text-sm font-medium text-gray-700 mb-2">
+              NIC Number
+            </label>
+            <input
+              type="text"
+              id="nic"
+              name="nic"
+              value={formData.nic}
+              onChange={handleInputChange}
+              className="input-field"
+              placeholder="Enter your NIC number"
+            />
+            {errors.nic && (
+              <p className="text-red-600 text-sm mt-1">{errors.nic}</p>
             )}
           </div>
 
