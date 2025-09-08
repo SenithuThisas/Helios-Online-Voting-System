@@ -96,6 +96,24 @@ class ApiService {
   }
 
   // Admin endpoints
+  async getAdminDashboard() {
+    return this.request('/admin/dashboard');
+  }
+
+  async getAdminUsers({ page = 1, limit = 10, search = '', division = '' } = {}) {
+    const params = new URLSearchParams({ page, limit });
+    if (search) params.set('search', search);
+    if (division) params.set('division', division);
+    return this.request(`/admin/users?${params.toString()}`);
+  }
+
+  async updateUserStatus(userId, isActive) {
+    return this.request(`/admin/users/${userId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ isActive }),
+    });
+  }
+
   async createElection(electionData) {
     return this.request('/admin/elections', {
       method: 'POST',
@@ -103,10 +121,36 @@ class ApiService {
     });
   }
 
+  async updateElection(electionId, electionData) {
+    return this.request(`/admin/elections/${electionId}`, {
+      method: 'PUT',
+      body: JSON.stringify(electionData),
+    });
+  }
+
+  async deleteElection(electionId) {
+    return this.request(`/admin/elections/${electionId}`, {
+      method: 'DELETE',
+    });
+  }
+
   async createCandidate(candidateData) {
     return this.request('/admin/candidates', {
       method: 'POST',
       body: JSON.stringify(candidateData),
+    });
+  }
+
+  async updateCandidate(candidateId, candidateData) {
+    return this.request(`/admin/candidates/${candidateId}`, {
+      method: 'PUT',
+      body: JSON.stringify(candidateData),
+    });
+  }
+
+  async deleteCandidate(candidateId) {
+    return this.request(`/admin/candidates/${candidateId}`, {
+      method: 'DELETE',
     });
   }
 
