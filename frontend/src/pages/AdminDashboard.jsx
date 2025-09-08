@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import api from '../services/api';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -12,61 +13,43 @@ const AdminDashboard = () => {
     return null;
   }
 
-  // Mock data for admin dashboard
-  const stats = {
-    totalElections: 15,
-    activeElections: 3,
-    totalVoters: 1250,
-    totalVotes: 890,
-    pendingApprovals: 5
-  };
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [stats, setStats] = useState({
+    totalElections: 0,
+    activeElections: 0,
+    totalVoters: 0,
+    totalVotes: 0,
+    pendingApprovals: 0,
+  });
+  const [recentElections, setRecentElections] = useState([]);
+  const [activeElections, setActiveElections] = useState([]);
+  const [usersByDivision, setUsersByDivision] = useState([]);
 
-  const recentElections = [
-    {
-      id: '1',
-      title: 'Student Council Election 2024',
-      status: 'active',
-      startDate: '2024-03-15',
-      endDate: '2024-03-20',
-      totalVotes: 156,
-      totalCandidates: 8
-    },
-    {
-      id: '2',
-      title: 'Department Representative',
-      status: 'upcoming',
-      startDate: '2024-03-18',
-      endDate: '2024-03-25',
-      totalVotes: 0,
-      totalCandidates: 5
-    },
-    {
-      id: '3',
-      title: 'Class Monitor Election',
-      status: 'completed',
-      startDate: '2024-02-20',
-      endDate: '2024-02-25',
-      totalVotes: 89,
-      totalCandidates: 3
-    }
-  ];
-
-  const pendingApprovals = [
-    {
-      id: '1',
-      type: 'election',
-      title: 'Sports Committee Election',
-      submittedBy: 'John Doe',
-      submittedDate: '2024-03-10'
-    },
-    {
-      id: '2',
-      type: 'candidate',
-      title: 'Sarah Johnson - Student Council',
-      submittedBy: 'Sarah Johnson',
-      submittedDate: '2024-03-09'
-    }
-  ];
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        setLoading(true);
+        const data = await api.getAdminDashboard();
+        setStats({
+          totalElections: data.statistics?.totalElections || 0,
+          activeElections: data.activeElections?.length || 0,
+          totalVoters: data.statistics?.totalUsers || 0,
+          totalVotes: data.statistics?.totalVotes || 0,
+          pendingApprovals: 0,
+        });
+        setRecentElections(data.recentElections || []);
+        setActiveElections(data.activeElections || []);
+        setUsersByDivision(data.usersByDivision || []);
+        setError('');
+      } catch (err) {
+        setError(err.message || 'Failed to load dashboard');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboard();
+  }, []);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -205,7 +188,7 @@ const AdminDashboard = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
                       <div className="text-sm font-medium text-gray-900">{election.title}</div>
-                      <div className="text-sm text-gray-500">{election.totalCandidates} candidates</div>
+                      <div className="text-sm text-gray-500">{election.totalCandidates || '-'} candidates</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -218,11 +201,11 @@ const AdminDashboard = () => {
                     <div>to {new Date(election.endDate).toLocaleDateString()}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {election.totalVotes}
+                    {election.totalVotes ?? 0}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <Link
-                      to={`/admin/elections/${election.id}`}
+                      to={`/admin/elections/${election._id || election.id}`}
                       className="text-primary hover:text-primary/80 mr-3"
                     >
                       View
@@ -238,37 +221,28 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Pending Approvals */}
+      {/* Users by Division */}
       <div className="card">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold text-primary">Pending Approvals</h3>
-          <Link to="/admin/approvals" className="text-primary hover:text-primary/80 font-medium">
-            View All →
-          </Link>
+          <h3 className="text-xl font-semibold text-primary">Users by Division</h3>
         </div>
-        
-        <div className="space-y-4">
-          {pendingApprovals.map((item) => (
-            <div key={item.id} className="flex items-center justify-between p-4 border border-light rounded-lg">
-              <div>
-                <div className="flex items-center space-x-2">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    item.type === 'election' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                  }`}>
-                    {item.type === 'election' ? 'Election' : 'Candidate'}
-                  </span>
-                  <h4 className="text-sm font-medium text-gray-900">{item.title}</h4>
-                </div>
-                <div className="text-sm text-gray-500 mt-1">
-                  Submitted by {item.submittedBy} on {new Date(item.submittedDate).toLocaleDateString()}
-                </div>
-              </div>
-              <div className="flex space-x-2">
-                <button className="btn-primary px-4 py-2 text-sm">Approve</button>
-                <button className="btn-secondary px-4 py-2 text-sm">Reject</button>
-              </div>
-            </div>
-          ))}
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Division</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Users</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {usersByDivision.map((row) => (
+                <tr key={row._id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{row._id || 'Unknown'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{row.count}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
