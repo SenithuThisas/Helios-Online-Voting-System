@@ -1,0 +1,199 @@
+// Prisma Schema for Online Voting System
+// Database: PostgreSQL
+// ORM: Prisma with TypeScript
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id          String   @id @default(uuid())
+  name        String
+  subdomain   String   @unique
+  logo        String?
+  settings    Json?    // Custom settings per organization
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+  elections   Election[]
+
+  @@map("organizations")
+}
+
+model User {
+  id             String       @id @default(uuid())
+  nic            String       @unique
+  password       String       // Hashed with bcrypt
+  email          String?
+  phone          String
+  name           String
+  role           Role         @default(VOTER)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customFields   Json?        // Organization-specific fields (rank, badge, etc.)
+  isActive       Boolean      @default(true)
+  lastLogin      DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  votes            Vote[]
+  createdElections Election[] @relation("CreatedBy")
+  auditLogs        AuditLog[]
+
+  @@index([organizationId])
+  @@index([nic])
+  @@index([role])
+  @@map("users")
+}
+
+enum Role {
+  CHAIRMAN
+  SECRETARY
+  EXECUTIVE
+  VOTER
+}
+
+model OTP {
+  id        String   @id @default(uuid())
+  phone     String
+  code      String   // 6-digit code
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+  @@index([expiresAt])
+  @@map("otps")
+}
+
+model Election {
+  id             String         @id @default(uuid())
+  title          String
+  description    String         @db.Text
+  startDate      DateTime
+  endDate        DateTime
+  status         ElectionStatus @default(DRAFT)
+  votingType     VotingType     @default(SINGLE_CHOICE)
+  isAnonymous    Boolean        @default(true)
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdById    String
+  createdBy      User           @relation("CreatedBy", fields: [createdById], references: [id])
+  settings       Json?          // Custom election settings
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  candidates     Candidate[]
+  votes          Vote[]
+  results        Result?
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+  @@map("elections")
+}
+
+enum ElectionStatus {
+  DRAFT
+  SCHEDULED
+  ACTIVE
+  CLOSED
+  PUBLISHED
+}
+
+enum VotingType {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  RANKED
+}
+
+model Candidate {
+  id          String   @id @default(uuid())
+  name        String
+  description String?  @db.Text
+  photo       String?
+  electionId  String
+  election    Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  position    Int      @default(0) // Display order
+  metadata    Json?    // Additional candidate info
+  createdAt   DateTime @default(now())
+
+  votes       Vote[]
+
+  @@index([electionId])
+  @@map("candidates")
+}
+
+model Vote {
+  id          String   @id @default(uuid())
+  electionId  String
+  election    Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+  rank        Int?     // For ranked voting
+  votedAt     DateTime @default(now())
+  ipAddress   String?
+  userAgent   String?
+
+  @@unique([electionId, userId]) // One vote per user per election
+  @@index([electionId])
+  @@index([userId])
+  @@index([candidateId])
+  @@map("votes")
+}
+
+model Result {
+  id                String   @id @default(uuid())
+  electionId        String   @unique
+  election          Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  totalVotes        Int
+  participationRate Float
+  results           Json     // { candidateId: { voteCount, percentage } }
+  winnerId          String?
+  publishedAt       DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("results")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String   // LOGIN, VOTE, CREATE_ELECTION, etc.
+  entity    String?  // Election, Vote, etc.
+  entityId  String?
+  details   Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@index([entity])
+  @@map("audit_logs")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
