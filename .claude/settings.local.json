@@ -10,7 +10,11 @@
       "Bash(npm run prisma:generate:*)",
       "Bash(npm install)",
       "Bash(npm install:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(docker-compose down:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker restart:*)",
+      "Bash(echo $DATABASE_URL)"
     ],
     "deny": [],
     "ask": []

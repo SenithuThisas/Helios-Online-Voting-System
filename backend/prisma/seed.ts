@@ -1,5 +1,5 @@
-import { PrismaClient, Role, ElectionStatus, VotingType } from '@prisma/client';
-import { hashPassword } from '../src/utils/encryption';
+import { PrismaClient, Role, ElectionStatus, VotingType, User } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -24,7 +24,8 @@ async function main() {
   console.log('✅ Organization created:', org.name);
 
   // Create users
-  const hashedPassword = await hashPassword('password123');
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash('password123', salt);
 
   const chairman = await prisma.user.upsert({
     where: { nic: '199012345678' },
@@ -41,6 +42,7 @@ async function main() {
     },
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const secretary = await prisma.user.upsert({
     where: { nic: '199123456789' },
     update: {},
@@ -56,6 +58,7 @@ async function main() {
     },
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const executive = await prisma.user.upsert({
     where: { nic: '199234567890' },
     update: {},
@@ -71,7 +74,7 @@ async function main() {
     },
   });
 
-  const voters = [];
+  const voters: User[] = [];
   for (let i = 1; i <= 10; i++) {
     const voter = await prisma.user.upsert({
       where: { nic: `19930000000${i}` },
